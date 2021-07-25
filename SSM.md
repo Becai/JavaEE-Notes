@@ -551,19 +551,19 @@ DispatcherServlet本质上也是一个Servlet，其中有一个doService方法�
 
 ### SpringMVC的使用
 
-使用spring和springmvc只用导入一个依赖信息即可，其他spring所需依赖会自动导入
-
-![springmvc的jar包依赖图](./springmvc_jar.jpg)
-
 Maven依赖
 
 ```xml
- <dependency>
+<dependency>
      <groupId>org.springframework</groupId>
      <artifactId>spring-webmvc</artifactId>
      <version>x.x.x</version>
 </dependency>
 ```
+
+使用spring和springmvc只用导入一个依赖信息即可，其他spring所需依赖会自动导入
+
+![springmvc的jar包依赖图](./springmvc_jar.jpg)
 
 **web.xml**
 
@@ -616,6 +616,18 @@ Maven依赖
 </beans>
 ```
 
+```java
+// 使用配置文件开发，必须要实现Controller接口中的handleRequest方法，但可以不返回视图，在方法中处理请求并响应
+public class HelloController implements Controller {
+    @Override
+    public ModelAndView handleRequest(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws Exception {
+        // 通过httpServletResponse设置响应内容
+        httpServletResponse.getWriter().write("{\"status\" = \"ok\"}");
+        return null;
+    }
+}
+```
+
 **注解开发**
 
 ```xml
@@ -631,9 +643,8 @@ Maven依赖
        http://www.springframework.org/schema/mvc
        https://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
+    <!--开启注解扫描-->
     <context:component-scan base-package="com.springmvc.controller"/>
-    <!--资源过滤，让Spring不处理静态资源-->
-    <mvc:default-servlet-handler/>
     <!--开启注解支持-->
     <mvc:annotation-driven/>
     <!--视图解析器-->
@@ -672,6 +683,46 @@ public class HelloController {
     }
 }
 ```
+
+### 处理静态资源
+
+**静态资源为什么会被拦截 ？**
+
+当我们把web应用部署到Tomcat服务器上时，服务器会先加载全局的web.xml（CATALINA_HOME/conf/web.xml），然后才会加载我们自己web项目中的web.xml，当我们将`url-pattern`配置成` <url-pattern>/</url-pattern>`时，会覆盖掉全局web.xml中对静态资源的处理
+
+- 方式一
+
+使用Tomcat中的defaultServlet来处理静态资源
+
+```xml
+<!--在web.xml中配置defaultServlet来处理静态资源-->
+<servlet-mapping>
+    <servlet-name>default</servlet-name>
+    <url-pattern>*.html</url-pattern>
+</servlet-mapping>
+<servlet-mapping>
+    <servlet-name>default</servlet-name>
+    <url-pattern>*.jsp</url-pattern>
+</servlet-mapping>
+```
+
+defaultServlet为Tomcat默认创建的Servlet，可以直接使用
+
+- 方式二
+
+在SpringMVC的配置文件中添加`<mvc:default-servlet-handler/>`，会直接将所有静态资源转发到defaultServlet中
+
+- 方式三
+
+自定义静态资源路径
+
+```xml
+<!--location表示资源所在的路径，相对于webapp目录，mapping则是路径的匹配规则-->
+<mvc:resources location="/html/" mapping="/html/**"/>
+<mvc:resources location="/images/" mapping="/images/**"/>
+```
+
+通常会将方式二和方式三结合使用
 
 ### RESTful风格
 
