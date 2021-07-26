@@ -1420,3 +1420,166 @@ List<User> findByIds(@Param("ids") int[] ids);
 
 *注：有些情况下是需要关闭自动映射的，尤其是在多表关联查询的时候*
 
+### 多表查询
+
+orders表
+
+|  id  | ordertime | payment | uid  |
+| :--: | :-------: | :-----: | :--: |
+
+users表
+
+|  id  | username | address |
+| :--: | :------: | :-----: |
+
+当前用户表和订单表的关系为，一个用户有多个订单，一个订单只从属于一个用户
+
+#### 一对一查询
+
+Order和User实体类
+
+```java
+public class Order {
+
+    private int id;
+    private Date ordertime;
+    private double payment;
+    private int uid;
+
+    // 代表当前订单从属于哪一个客户
+    private User user;
+}
+
+public class User {
+    
+    private int id;
+    private String username;
+    private String address;
+}
+```
+
+OrderDao接口
+
+```java
+public interface OrderDao {
+    // 一对一关系
+    // 根据订单id查询订单以及对应的用户信息
+    Order findUserById(int id);
+}
+```
+
+**结果映射**
+
+- 实现方式一（使用子标签封装用户信息）
+
+```xml
+<mapper namespace="com.mybatis.dao.OrderDao">
+    <!--订单信息-->
+    <resultMap id="orderMap" type="com.mybatis.pojo.Order" autoMapping="false">
+        <id column="oid" property="id"/>
+        <result column="ordertime" property="ordertime"/>
+        <result column="payment" property="payment"/>
+        <result column="id" property="uid"/>
+    </resultMap>
+    <!--用户信息-->
+	<resultMap id="orderUserMap" type="com.mybatis.pojo.Order" autoMapping="false" extends="orderMap">
+        <result column="id" property="user.id"/>
+        <result column="username" property="user.username"/>
+        <result column="address" property="user.address"/>
+    </resultMap>
+    
+    <!--注意这个resultMap的值是子标签的id-->
+    <select id="findUserById" resultMap="orderUserMap">
+        select o.id oid,u.id,username,address,payment,ordertime from orders o,users u where o.uid = u.id and o.id = #{id}
+    </select>
+</mapper>
+```
+
+- 实现方式二（使用<association>标签封装）
+
+```xml
+<mapper namespace="com.mybatis.dao.OrderDao">
+    <resultMap id="orderMap" type="com.mybatis.pojo.Order" autoMapping="false">
+        <id column="oid" property="id"/>
+        <result column="ordertime" property="ordertime"/>
+        <result column="payment" property="payment"/>
+        <result column="id" property="uid"/>
+
+        <!--用户信息 
+        	property Order类中的属性
+        	javaType 该属性的类型
+         -->
+        <association property="user" javaType="com.mybatis.pojo.User">
+            <id column="id" property="id"/>
+            <result column="username" property="username"/>
+            <result column="address" property="address"/>
+        </association>
+    </resultMap>
+
+    <select id="findUserById" resultMap="orderMap">
+        select o.id oid,u.id,username,address,payment,ordertime from orders o,users u where o.uid = u.id and o.id = #{id}
+    </select>
+</mapper>
+```
+
+#### 一对多查询
+
+修改实体类
+
+```java
+public class Order {
+
+    private int id;
+    private Date ordertime;
+    private double payment;
+    private int uid;
+}
+
+public class User {
+    
+    private int id;
+    private String username;
+    private String address;
+    
+    // 代表当前用户拥有哪些订单
+    private List<Order> orders;
+}
+```
+
+UserMapper接口
+
+```java
+public interface UserMapper {
+    // 一对多关系
+    // 根据用户id查询用户信息以及其拥有的订单
+    List<User> findOrdersByUid(int id);
+}
+```
+
+**结果映射**
+
+```xml
+<mapper namespace="com.mybatis.dao.UserMapper">
+    <resultMap id="userMap" type="com.mybatis.pojo.User" autoMapping="false">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="address" property="address"/>
+
+        <!--订单信息
+			property: 对象属性名称
+			ofType: 设置集合的泛型  List<Order> orders
+      	-->
+        <collection property="orders" ofType="com.mybatis.pojo.Order">
+            <id column="oid" property="id"/>
+            <result column="ordertime" property="ordertime"/>
+            <result column="payment" property="payment"/>
+            <result column="id" property="uid"/>
+        </collection>
+    </resultMap>
+
+    <select id="findOrdersByUid" resultMap="userMap">
+        select u.id,o.id oid,payment,username,address from orders o,consumers u where o.uid = u.id and u.id = #{id}
+    </select>
+</mapper>
+```
+
