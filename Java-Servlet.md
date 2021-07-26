@@ -41,12 +41,7 @@ JDBC接口我们是调用者，Servlet接口我们是实现者（等待Tomcat中
 
 4. B/S 架构角色和协议：
 
-```mermaid
-graph LR
-A[浏览器] --> |http|B[Web服务器] 
-B --> |Servlet|C[服务器端Java程序]
-C --> |jdbc|D[数据库] 
-```
+![B/S架构流程图](./BS_Process.jpg)
 
 ## Servlet
 
