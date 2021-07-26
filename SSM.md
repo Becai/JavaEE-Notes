@@ -599,6 +599,7 @@ Maven依赖
         xsi:schemaLocation="
 		http://www.springframework.org/schema/beans
 		http://www.springframework.org/schema/beans/spring-beans.xsd">
+    
     <!--处理器映射器-->
     <bean class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping"/>
     <!--处理器适配器-->
@@ -710,7 +711,7 @@ defaultServlet为Tomcat默认创建的Servlet，可以直接使用
 
 - 方式二
 
-在SpringMVC的配置文件中添加`<mvc:default-servlet-handler/>`，会直接将所有静态资源转发到defaultServlet中
+在SpringMVC的配置文件中添加`<mvc:default-servlet-handler/>`，会直接将所有静态资源转发到defaultServlet中（这个“所有静态资源”只包括在webapp根目录下的静态资源）
 
 - 方式三
 
@@ -718,11 +719,14 @@ defaultServlet为Tomcat默认创建的Servlet，可以直接使用
 
 ```xml
 <!--location表示资源所在的路径，相对于webapp目录，mapping则是路径的匹配规则-->
+<!--mapping属性中**可以匹配其子目录，如"/html/h1/"下的资源；而*只能匹配"/html/"下的资源-->
 <mvc:resources location="/html/" mapping="/html/**"/>
 <mvc:resources location="/images/" mapping="/images/**"/>
 ```
 
-通常会将方式二和方式三结合使用
+注：使用方式三处理静态资源时，前端访问的url要加上`/html/`前缀
+
+通常会将方式二和方式三结合使用（让webapp根目录下和其子目录下的静态资源都能被访问）
 
 ### RESTful风格
 
