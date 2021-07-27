@@ -41,7 +41,7 @@ JDBC接口我们是调用者，Servlet接口我们是实现者（等待Tomcat中
 
 4. B/S 架构角色和协议：
 
-![B/S架构流程图](./BS_Process.jpg)
+![B/S架构流程图](./images/BS_Process.jpg)
 
 ## Servlet
 
@@ -798,7 +798,7 @@ Session的实现与Cookie密切相关
 - 服务器收到Cookie，验证Cookie的name确实是：JSESSIONID，然后自动获取该Cookie的value
 - 通过Cookie的value去session列表中检索对应的HttpSession对象
 
-![HttpSession](./session.jpg)
+![HttpSession](./images/session.jpg)
 
 *注：浏览器关闭之后，服务器不会销毁 session对象。session默认超时时间为 30分钟，若超时， session对象会自动销毁*
 

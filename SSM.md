@@ -541,13 +541,13 @@ Spring MVC是Spring Framework的一部分，是基于Java实现MVC的轻量级we
 
 **Spring的web框架围绕DispatcherServlet（调度Servlet）设计**
 
-![DispatcherServlet继承体系图](./SpringMVC1.jpg)
+![DispatcherServlet继承体系图](./images/SpringMVC1.jpg)
 
 DispatcherServlet本质上也是一个Servlet，其中有一个doService方法，是所有请求的入口
 
 **SpringMVC执行原理**
 
-![SpringMVC执行原理图](./SpringMVC2.jpg)
+![SpringMVC执行原理图](./images/SpringMVC2.jpg)
 
 ### SpringMVC的使用
 
@@ -563,7 +563,7 @@ Maven依赖
 
 使用spring和springmvc只用导入一个依赖信息即可，其他spring所需依赖会自动导入
 
-![springmvc的jar包依赖图](./springmvc_jar.jpg)
+![springmvc的jar包依赖图](./images/springmvc_jar.jpg)
 
 **web.xml**
 
@@ -1582,4 +1582,60 @@ public interface UserMapper {
     </select>
 </mapper>
 ```
+
+### MyBatis缓存
+
+Mybatis的缓存其实就是把之前查到的数据存入内存，如果下次查询内容相同，就可以直接从缓存中取，从而提高效率
+
+Mybatis缓存分为一级缓存和二级缓存，一级缓存（默认开启）是SqlSession级别的缓存，二级缓存相对于mapper级别的缓存
+
+> 一级缓存的作用域只在它的一个SqlSession中，关闭之后就没了，因为它的本质也就是SqlSession中的一个哈希表而已。而且要一级缓存对应的SqlSession关闭了才会把一级缓存的数据拷贝到二级缓存。
+>
+> 二级缓存的作用域是一个Mapper文件，也就是一个nameSpace下的所有SqlSession都是共用这一个缓存。
+
+**查询顺序：**
+
+![MyBatis缓存顺序](./images/MybatisCache.jpg)
+
+#### 一级缓存
+
+不会使用一级缓存的情况：
+
+1. 调用相同方法，但是传入参数不同
+2. 调用相同方法且传入参数相同，但是使用的是另外一个SqlSession
+3. 如果查询完成后，对某一个表进行了增、删、改的操作，都会清空这个SqlSession上的缓存
+4. 如果手动调用SqlSession的clearCache方法清除缓存，后面也使用不了缓存
+
+#### 二级缓存
+
+注意：
+
+1. 只有在SqlSession调用了close或者commit之后的数据才会进入二级缓存
+2. 所有的增、删、改操作都会刷新二级缓存，导致二级缓存失效
+
+**开启二级缓存（一般不会使用二级缓存）**
+
+- 全局开启
+
+在Mybatis核心配置文件中配置
+
+```xml
+<setting>
+    <setting name="cacheEnabled" value="true"></setting>
+</setting>
+```
+
+- 局部开启
+
+在要开启二级缓存的mapper映射文件中设置cache标签
+
+```xml
+<mapper namespace="com.mybatis.dao.UserDao">
+    <cache></cache>
+</mapper>
+```
+
+注意：如果多个namespace中有针对于同一个表的操作，假设有一个表在一个namespace中刷新了缓存，在另一个namespace中没有刷新，就会出现读到脏数据的情况。
+
+使用MyBatis二级缓存有一个前提：**必须保证所有的增删改查都在同一个命名空间下才行**
 
